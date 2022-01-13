@@ -21,7 +21,7 @@ export default {
   },
   methods: {
     logout () {
-      this.$store.state.accessToken = null
+      this.$store.commit('USER_LOGOUT')
       this.$router.push('/login')
     }
   }

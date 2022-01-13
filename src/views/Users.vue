@@ -1,64 +1,72 @@
 <template>
-    <div class="users">
-        <b-spinner class="m-5" label="Spinning" v-if="loader"></b-spinner>
-        <div v-else>
-          <div class="create-user">
-            <b-button variant="outline-secondary" @click="$router.push('/')">
-                Home
-            </b-button>
-            <b-button @click="openCreateUserModal()">
-                Create User
-            </b-button>
-        </div>
-       <b-table
-        class="users-table"
-        hover
-        :items="users"
-        :fields="fields"
+  <div class="users">
+    <b-spinner class="m-5" label="Spinning" v-if="loader"></b-spinner>
+    <div v-else>
+      <div class="create-user">
+        <b-button variant="outline-secondary" @click="$router.push('/')">
+          Home
+        </b-button>
+        <b-button @click="openCreateUserModal()"> Create User </b-button>
+      </div>
+      <b-table class="users-table" hover :items="users" :fields="fields">
+        <template #cell(index)="data">
+          <span>{{ data.index + 1 }}</span>
+        </template>
+        <template #cell(avatar)="data">
+          <router-link :to="`users/${data.item.id}`">
+            <img class="avatar" :src="data.value" alt="avatar" />
+          </router-link>
+        </template>
+        <template #cell(full_name)="data">
+          <router-link :to="`users/${data.item.id}`">
+            <span class="full-name"
+              >{{ data.item.first_name }} {{ data.item.last_name }}</span
+            >
+          </router-link>
+        </template>
+        <template #cell(actions)="data">
+          <b-button size="sm" class="mr-1" @click="openUserModal(data.item)">
+            Edit
+          </b-button>
+          <b-button
+            variant="danger"
+            size="sm"
+            @click="openDeleteModal(data.item)"
+          >
+            Delete
+          </b-button>
+        </template>
+      </b-table>
+      <b-pagination
+        v-model="currentPage"
+        :total-rows="total"
+        :per-page="perPage"
+        aria-controls="users"
+        align="center"
+      ></b-pagination>
+    </div>
+    <b-modal id="deleteModal" title="Confirm Modal">
+      Please confirm that you want to delete User:
+      <b>{{ currentUser.first_name }} {{ currentUser.last_name }}</b>
+      <template #modal-footer>
+        <b-button variant="outline-secondary" @click="cancel('deleteModal')">
+          Cancel
+        </b-button>
+        <b-button variant="danger" @click="deleteUser()"> Delete </b-button>
+      </template>
+    </b-modal>
+
+    <b-modal id="userModal" :title="update ? 'Update User' : 'Create User'">
+      <validation-observer ref="observer" v-slot="{ handleSubmit }">
+        <b-form
+          @submit.stop.prevent="handleSubmit(update ? updateUser : createUser)"
+          ref="bform"
         >
-            <template #cell(index)="data">
-                <span>{{data.index + 1}}</span>
-            </template>
-           <template #cell(avatar)="data">
-               <router-link :to="`users/${data.item.id}`">
-                  <img class="avatar" :src="data.value" alt="avatar">
-               </router-link>
-            </template>
-            <template #cell(full_name)="data">
-                <router-link :to="`users/${data.item.id}`">
-                <span class="full-name">{{data.item.first_name}} {{data.item.last_name}}</span>
-                </router-link>
-            </template>
-            <template #cell(actions)="data">
-                <b-button size="sm"  class="mr-1" @click="openUserModal(data.item)">
-                    Edit
-                </b-button>
-                <b-button variant="danger" size="sm" @click="openDeleteModal(data.item)">
-                    Delete
-                </b-button>
-            </template>
-       </b-table>
-       <b-pagination
-            v-model="currentPage"
-            :total-rows="total"
-            :per-page="perPage"
-            aria-controls="users"
-            align="center"
-        ></b-pagination>
-        </div>
-        <b-modal id="deleteModal" title="Confirm Modal">
-          Please confirm that you want to delete User: <b>{{ currentUser.first_name }} {{ currentUser.last_name }}</b>
-          <template #modal-footer>
-            <b-button variant="outline-secondary" @click="cancel('deleteModal')">
-              Cancel
-            </b-button>
-            <b-button variant="danger" @click="deleteUser()">
-              Delete
-            </b-button>
-          </template>
-        </b-modal>
-        <b-modal id="userModal" :title="update ? 'Update User' : 'Create User'">
-           <b-form>
+          <validation-provider
+            name="Name"
+            :rules="{ required: true }"
+            v-slot="validationContext"
+          >
             <b-form-group
               class="mb-4"
               id="input-group-1"
@@ -70,34 +78,52 @@
                 v-model="currentUser.first_name"
                 type="text"
                 placeholder="Name"
-                required
+                :state="getValidationState(validationContext)"
+                aria-describedby="input-1-live-feedback"
               ></b-form-input>
+              <b-form-invalid-feedback id="input-1-live-feedback">{{
+                validationContext.errors[0]
+              }}</b-form-invalid-feedback>
             </b-form-group>
-            <b-form-group
-              class="mb-4"
-              id="input-group-1"
-              label="Job"
-              label-for="input-1"
-            >
-              <b-form-input
-                id="input-1"
-                v-model="currentUser.job"
-                type="text"
-                placeholder="Job"
-                required
-              ></b-form-input>
-            </b-form-group>
-          </b-form>
-          <template #modal-footer>
-            <b-button variant="outline-secondary" @click="cancel('userModal')">
-              Cancel
-            </b-button>
-            <b-button variant="secondary" @click="update ? updateUser() : createUser()">
-              {{ update ? 'Edit' : 'Create' }}
-            </b-button>
-          </template>
-        </b-modal>
-    </div>
+          </validation-provider>
+          <validation-provider
+            name="Job"
+            :rules="{ required: true }"
+            v-slot="validationContext"
+          >
+          <b-form-group
+            class="mb-4"
+            id="input-group-1"
+            label="Job"
+            label-for="input-1"
+          >
+            <b-form-input
+              id="input-1"
+              v-model="currentUser.job"
+              type="text"
+              placeholder="Job"
+              :state="getValidationState(validationContext)"
+                aria-describedby="input-2-live-feedback"
+            ></b-form-input>
+             <b-form-invalid-feedback id="input-2-live-feedback">{{
+                validationContext.errors[0]
+              }}</b-form-invalid-feedback>
+          </b-form-group>
+          </validation-provider>
+
+          <button ref="bformsubmit" class="d-none" type="submit"></button>
+        </b-form>
+      </validation-observer>
+      <template #modal-footer>
+        <b-button variant="outline-secondary" @click="cancel('userModal')">
+          Cancel
+        </b-button>
+        <b-button variant="secondary" @click="$refs['bformsubmit'].click()">
+          {{ update ? 'Edit' : 'Create' }}
+        </b-button>
+      </template>
+    </b-modal>
+  </div>
 </template>
 
 <script>
@@ -113,7 +139,10 @@ export default {
       perPage: 6,
       total: null,
       fields: ['index', 'avatar', 'full_name', 'email', 'actions'],
-      currentUser: {}
+      currentUser: {
+        first_name: '',
+        job: ''
+      }
     }
   },
   created () {
@@ -124,14 +153,18 @@ export default {
       this.getUsers()
     }
   },
+
   methods: {
+    getValidationState ({ dirty, validated, valid = null }) {
+      return dirty || validated ? valid : null
+    },
     getUsers () {
       const qb = RequestQueryBuilder.create()
       const perPage = this.perPage
       const currentPage = this.currentPage
       qb.setPage(currentPage)
       qb.setLimit(perPage)
-      this.$http.users.getAll(qb).then(res => {
+      this.$http.users.getAll(qb).then((res) => {
         this.users = res.data.data
         this.total = res.data.total
         this.loader = false
@@ -142,14 +175,20 @@ export default {
       this.$bvModal.show('deleteModal')
     },
     deleteUser () {
-      this.$http.users.delete(this.currentUser.id).then(() => {
-        const index = this.users.findIndex(
-          user => user.id === this.currentUser.id
-        )
-        this.users.splice(index, 1)
-        this.$bvModal.hide('deleteModal')
-        this.currentUser = {}
-      })
+      this.$http.users
+        .delete(this.currentUser.id)
+        .then(() => {
+          const index = this.users.findIndex(
+            (user) => user.id === this.currentUser.id
+          )
+          this.users.splice(index, 1)
+          this.$bvModal.hide('deleteModal')
+          this.currentUser = {}
+          this.makeToast('success', 'User Deleted Successfully')
+        })
+        .catch(() => {
+          this.makeToast('danger', 'Error!')
+        })
     },
     openCreateUserModal () {
       this.update = false
@@ -160,10 +199,16 @@ export default {
         name: this.currentUser.first_name,
         job: this.currentUser.job
       }
-      this.$http.users.create(form).then(res => {
-        this.$bvModal.hide('userModal')
-        this.currentUser = {}
-      })
+      this.$http.users
+        .create(form)
+        .then(() => {
+          this.$bvModal.hide('userModal')
+          this.currentUser = {}
+          this.makeToast('success', 'User Created Successfully')
+        })
+        .catch(() => {
+          this.makeToast('danger', 'Error!')
+        })
     },
     openUserModal (currentUser) {
       this.update = true
@@ -176,14 +221,26 @@ export default {
         name: this.currentUser.first_name,
         job: this.currentUser.job
       }
-      this.$http.users.update(form, this.currentUser.id).then(() => {
-        this.$bvModal.hide('userModal')
-        this.currentUser = {}
-        this.update = false
-      })
+      this.$http.users
+        .update(form, this.currentUser.id)
+        .then(() => {
+          this.$bvModal.hide('userModal')
+          this.currentUser = {}
+          this.update = false
+          this.makeToast('success', 'User Updated Successfully')
+        })
+        .catch(() => {
+          this.makeToast('danger', 'Error!')
+        })
     },
     cancel (modal) {
       this.$bvModal.hide(modal)
+    },
+    makeToast (variant, content) {
+      this.$bvToast.toast(content, {
+        variant: variant,
+        solid: true
+      })
     }
   }
 }

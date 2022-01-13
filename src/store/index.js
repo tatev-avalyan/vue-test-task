@@ -11,6 +11,9 @@ export default new Vuex.Store({
   mutations: {
     USER_LOGIN (state, data) {
       state.accessToken = data.token
+    },
+    USER_LOGOUT (state) {
+      state.accessToken = null
     }
   },
   actions: {},
