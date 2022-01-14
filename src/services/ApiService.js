@@ -2,7 +2,7 @@ import axios from 'axios'
 import headers from './ApiHeaders'
 
 const instance = axios.create({
-  baseURL: 'https://reqres.in/',
+  baseURL: process.env.VUE_APP_API_URL,
   timeout: 30000
 })
 
@@ -14,6 +14,7 @@ instance.interceptors.response.use(
   response => response,
   error => {
     if (error.message === 'Unauthorized') {
+      this.$store.commit('USER_LOGOUT')
       this.$router.push('/login')
     }
 
