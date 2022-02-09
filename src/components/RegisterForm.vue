@@ -1,8 +1,8 @@
 <template>
-  <div class="login-form">
-    <h1>Login</h1>
+  <div class="register-form">
+    <h1>Register</h1>
     <validation-observer ref="observer" v-slot="{ handleSubmit }">
-      <b-form @submit.stop.prevent="handleSubmit(login)" ref="bform">
+      <b-form @submit.stop.prevent="handleSubmit(register)" ref="bform">
         <validation-provider
           name="Email"
           :rules="{ required: true, email: true }"
@@ -51,7 +51,7 @@
             }}</b-form-invalid-feedback>
           </b-form-group>
         </validation-provider>
-        <b-button type="submit" variant="primary">Login</b-button>
+        <b-button type="submit" variant="primary">Submit</b-button>
       </b-form>
     </validation-observer>
   </div>
@@ -62,9 +62,14 @@ export default {
   data () {
     return {
       form: {
+        name: '',
         email: '',
-        password: ''
-      }
+        password: '',
+        startDate: '',
+        endDate: '',
+        agreement: false
+      },
+      confirmPassword: ''
     }
   },
   methods: {
@@ -77,9 +82,9 @@ export default {
         solid: true
       })
     },
-    login () {
+    register () {
       this.$store
-        .dispatch('login', this.form)
+        .dispatch('register', this.form)
         .then((res) => {
           this.$router.push('/products')
         })

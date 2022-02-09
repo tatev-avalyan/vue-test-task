@@ -1,39 +1,31 @@
 <template>
-  <div class="users">
+  <div class="products">
     <b-spinner class="m-5" label="Spinning" v-if="loader"></b-spinner>
     <div v-else>
       <div class="create-user">
         <b-button variant="outline-secondary" @click="$router.push('/')">
           Home
         </b-button>
-        <b-button @click="openCreateUserModal()"> Create User </b-button>
       </div>
-      <b-table class="users-table" hover :items="users" :fields="fields">
+      <b-table class="products-table" hover :items="products" :fields="fields">
         <template #cell(index)="data">
           <span>{{ data.index + 1 }}</span>
         </template>
         <template #cell(avatar)="data">
-          <router-link :to="`users/${data.item.id}`">
+          <router-link :to="`products/${data.item.id}`">
             <img class="avatar" :src="data.value" alt="avatar" />
           </router-link>
         </template>
         <template #cell(full_name)="data">
-          <router-link :to="`users/${data.item.id}`">
+          <router-link :to="`products/${data.item.id}`">
             <span class="full-name"
               >{{ data.item.first_name }} {{ data.item.last_name }}</span
             >
           </router-link>
         </template>
         <template #cell(actions)="data">
-          <b-button size="sm" class="mr-1" @click="openUserModal(data.item)">
+          <b-button size="sm" class="mr-1" @click="openProductModal(data.item)">
             Edit
-          </b-button>
-          <b-button
-            variant="danger"
-            size="sm"
-            @click="openDeleteModal(data.item)"
-          >
-            Delete
           </b-button>
         </template>
       </b-table>
@@ -41,7 +33,7 @@
         v-model="currentPage"
         :total-rows="total"
         :per-page="perPage"
-        aria-controls="users"
+        aria-controls="products"
         align="center"
       ></b-pagination>
     </div>
@@ -91,24 +83,24 @@
             :rules="{ required: true }"
             v-slot="validationContext"
           >
-          <b-form-group
-            class="mb-4"
-            id="input-group-1"
-            label="Job"
-            label-for="input-1"
-          >
-            <b-form-input
-              id="input-1"
-              v-model="currentUser.job"
-              type="text"
-              placeholder="Job"
-              :state="getValidationState(validationContext)"
+            <b-form-group
+              class="mb-4"
+              id="input-group-1"
+              label="Job"
+              label-for="input-1"
+            >
+              <b-form-input
+                id="input-1"
+                v-model="currentUser.job"
+                type="text"
+                placeholder="Job"
+                :state="getValidationState(validationContext)"
                 aria-describedby="input-2-live-feedback"
-            ></b-form-input>
-             <b-form-invalid-feedback id="input-2-live-feedback">{{
+              ></b-form-input>
+              <b-form-invalid-feedback id="input-2-live-feedback">{{
                 validationContext.errors[0]
               }}</b-form-invalid-feedback>
-          </b-form-group>
+            </b-form-group>
           </validation-provider>
 
           <button ref="bformsubmit" class="d-none" type="submit"></button>
@@ -133,24 +125,23 @@ export default {
   data () {
     return {
       loader: true,
-      users: [],
-      update: false,
+      products: [],
       currentPage: 1,
       perPage: 6,
       total: null,
-      fields: ['index', 'avatar', 'full_name', 'email', 'actions'],
-      currentUser: {
+      fields: ['name', 'image', 'price', 'actions'],
+      product: {
         first_name: '',
         job: ''
       }
     }
   },
   created () {
-    this.getUsers()
+    this.getproducts()
   },
   watch: {
     currentPage () {
-      this.getUsers()
+      this.getproducts()
     }
   },
 
@@ -158,80 +149,21 @@ export default {
     getValidationState ({ dirty, validated, valid = null }) {
       return dirty || validated ? valid : null
     },
-    getUsers () {
+    getproducts () {
       const qb = RequestQueryBuilder.create()
       const perPage = this.perPage
       const currentPage = this.currentPage
       qb.setPage(currentPage)
       qb.setLimit(perPage)
-      this.$http.users.getAll(qb).then((res) => {
-        this.users = res.data.data
+      this.$http.products.getAll(qb).then((res) => {
+        this.products = res.data.data
         this.total = res.data.total
         this.loader = false
       })
     },
-    openDeleteModal (currentUser) {
-      this.currentUser = currentUser
-      this.$bvModal.show('deleteModal')
-    },
-    deleteUser () {
-      this.$http.users
-        .delete(this.currentUser.id)
-        .then(() => {
-          const index = this.users.findIndex(
-            (user) => user.id === this.currentUser.id
-          )
-          this.users.splice(index, 1)
-          this.$bvModal.hide('deleteModal')
-          this.currentUser = {}
-          this.makeToast('success', 'User Deleted Successfully')
-        })
-        .catch(() => {
-          this.makeToast('danger', 'Error!')
-        })
-    },
-    openCreateUserModal () {
-      this.update = false
+    openProductModal (product) {
+      this.product = product
       this.$bvModal.show('userModal')
-    },
-    createUser () {
-      const form = {
-        name: this.currentUser.first_name,
-        job: this.currentUser.job
-      }
-      this.$http.users
-        .create(form)
-        .then(() => {
-          this.$bvModal.hide('userModal')
-          this.currentUser = {}
-          this.makeToast('success', 'User Created Successfully')
-        })
-        .catch(() => {
-          this.makeToast('danger', 'Error!')
-        })
-    },
-    openUserModal (currentUser) {
-      this.update = true
-      this.currentUser = currentUser
-      this.currentUser.job = 'Leader'
-      this.$bvModal.show('userModal')
-    },
-    updateUser () {
-      const form = {
-        name: this.currentUser.first_name,
-        job: this.currentUser.job
-      }
-      this.$http.users
-        .update(form, this.currentUser.id)
-        .then(() => {
-          this.$bvModal.hide('userModal')
-          this.currentUser = {}
-          this.update = false
-          this.makeToast('success', 'User Updated Successfully')
-        })
-        .catch(() => {
-          this.makeToast('danger', 'Error!')
-        })
     },
     cancel (modal) {
       this.$bvModal.hide(modal)

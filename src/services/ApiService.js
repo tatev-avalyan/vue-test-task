@@ -6,13 +6,13 @@ const instance = axios.create({
   timeout: 30000
 })
 
-instance.interceptors.request.use(config => {
+instance.interceptors.request.use((config) => {
   config.headers = headers()
   return config
 })
 instance.interceptors.response.use(
-  response => response,
-  error => {
+  (response) => response,
+  (error) => {
     if (error.message === 'Unauthorized') {
       this.$store.commit('USER_LOGOUT')
       this.$router.push('/login')
@@ -22,48 +22,23 @@ instance.interceptors.response.use(
   }
 )
 
-export default {
+const service = {
   auth: {
     login (form) {
       return instance({
-        url: 'api/login',
+        url: 'login',
         method: 'post',
         data: form
       })
     }
   },
-  users: {
+  products: {
     getAll (qb) {
       return instance({
-        url: 'api/users?' + qb.query(),
+        url: 'products?' + qb.query(),
         method: 'get'
-      })
-    },
-    getById (id) {
-      return instance({
-        url: `api/users/${id}`,
-        method: 'get'
-      })
-    },
-    delete (id) {
-      return instance({
-        url: `api/users/${id}`,
-        method: 'delete'
-      })
-    },
-    create (data) {
-      return instance({
-        url: 'api/users',
-        method: 'post',
-        data: data
-      })
-    },
-    update (user, id) {
-      return instance({
-        url: `api/users/${id}`,
-        method: 'put',
-        data: user
       })
     }
   }
 }
+export default service

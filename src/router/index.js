@@ -1,10 +1,11 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import store from '@/store'
+import Register from '@/views/Register'
 import Login from '@/views/Login'
-import Users from '@/views/Users'
+import Products from '@/views/Products'
 import Home from '@/views/Home'
-import UserDetails from '@/views/UserDetails'
+
 Vue.use(VueRouter)
 
 const routes = [
@@ -21,17 +22,18 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
-    path: '/users',
-    name: 'Users',
-    component: Users,
-    meta: { requiresAuth: true }
+    path: '/register',
+    name: 'Register',
+    component: Register,
+    meta: { requiresAuth: false }
   },
   {
-    path: '/users/:id',
-    name: 'UserDetails',
-    component: UserDetails,
+    path: '/products',
+    name: 'Products',
+    component: Products,
     meta: { requiresAuth: true }
   },
+
   {
     path: '*',
     redirect: '/'
@@ -45,13 +47,13 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
   const isLoggedIn = store.state.accessToken
-
-  if (to.matched.some(record => record.meta.requiresAuth)) {
+  console.log(to.path)
+  if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (!isLoggedIn) {
       next({ path: '/login' })
     }
   }
-  if (to.matched.some(record => !record.meta.requiresAuth)) {
+  if (to.matched.some((record) => !record.meta.requiresAuth)) {
     if (isLoggedIn && to.path !== '/') {
       next({ path: '/' })
     }
