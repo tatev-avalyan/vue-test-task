@@ -52,6 +52,9 @@ router.beforeEach((to, from, next) => {
     if (!isLoggedIn) {
       next({ path: '/login' })
     }
+    if (!isLoggedIn && to.path !== '/register') {
+      next({ path: '/login' })
+    }
   }
   if (to.matched.some((record) => !record.meta.requiresAuth)) {
     if (isLoggedIn && to.path !== '/') {
